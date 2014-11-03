@@ -1,0 +1,74 @@
+config:
+    version : 0.5
+    comment : 'Info server pattern file'
+    #homedir : ''
+    homedir : '/etc/zabbix/log-parser/'
+    hostname: bxcloudcompute01
+    zbxhost : bxcloudcompute01.openstack.local_Log
+    #zbxsrv  : zab01.booxdev.com
+    zbxsrv  : 10.2.0.168
+
+commands:
+    test1             : 'test'
+    always_true       : 'true'
+    always_false      : 'false'
+    list              : 'ls -l %(folder)s'
+    hostname          : 'echo %(hostname)s'
+    getversion        : 'echo $LOGNAME %(version)s : %(comment)s'
+
+
+# List of test commands
+test:
+  # Parameters specific for that test
+  config:
+    ignoreerrors    : True
+    folder          : './'
+    errorlist       :
+        - 1ExecCMD.py
+        - drwxrwxrwx
+
+  # List of execution lines
+  execlist:
+  - action  :
+       cmd           : always_true
+       retry_count   : 5
+       retry_sleep   : 3
+       ignore_errors : True
+    print   :    always
+    fallback:    getversion
+
+  - action  :
+       cmd           : list
+    print   :    always
+
+  - action  :
+       cmd           : hostname
+    fallback:    always_false
+
+test2:
+  config:
+     ignoreerrors    : True
+     folder          : '/aassa'
+
+  execlist:
+  -
+   action      :
+       cmd           : list
+       retry_count   : 3
+       retry_sleep   : 2
+       print         : False
+   print       :  always
+
+  - action  :
+       cmd           : always_true
+       retry_count   : 5
+       retry_sleep   : 3
+       ignore_errors : True
+    print   :    always
+    fallback:    getversion
+
+  - action  :
+       cmd           : list
+    print   :    always
+
+
