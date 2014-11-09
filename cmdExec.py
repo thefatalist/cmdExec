@@ -21,8 +21,8 @@ CURRENT_DATE     = "%s-%s-%s" % (UTC_TIME[0], UTC_TIME[1], UTC_TIME[2])
 config = {
 	'DEFAULT_CONFIG'   : "./cmdExec.yaml",
 	'DEFAULT_LOG'      : "./LOGS/cmdExec" + CURRENT_DATE + ".log",
-	#'DEFAULT_LOGLEVEL' : logging.DEBUG,
-	'DEFAULT_LOGLEVEL' : logging.INFO,
+	'DEFAULT_LOGLEVEL' : logging.DEBUG,
+	#'DEFAULT_LOGLEVEL' : logging.INFO,
 	'DONT_EXECUTE'     : False,
 	'LIST_ACTIONS'     : False,
 	'ACTION'           : None,

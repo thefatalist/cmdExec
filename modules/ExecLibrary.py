@@ -150,11 +150,15 @@ class CommandExecutor():
 				status += ' N'[ step.has_key("errorifnot") ]
 				status += ' *'[ step.has_key("saveline") ]
 			
+# TODO:
+# Rewrite the output plugin!
 				action = "last output -> " + '|'.join( step.get("grep", "") )
 				if action == "last output -> ":
 					action = "last output x> " + '|'.join( step.get("nogrep", "") )
 				if action == "last output x> ":
-					action = step.get("action", "---")
+############################
+					action = step.get("action", {})
+					action = action.get("cmd", "---")
 
 				print( "\t%-2s%40s |%s| %s" % (num+1, action, status, step.get("fallback", "---")) )
 
