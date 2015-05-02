@@ -111,13 +111,15 @@ class ConfigStorage():
 
 ################## DEFINED FUNCTIONS
 # Setup Logging
-def setLogging( logFileName="temp.log", logLevel=logging.DEBUG ):
+#def setLogging( logFileName="temp.log", logLevel=logging.DEBUG ):
+def setLogging( logFileName="temp.log", logLevel=logging.INFO ):
 	global logger
 	if not exists( dirname( logFileName) ):
 		makedirs( dirname( logFileName) )
 
 	logger = logging.getLogger()
-	logger.setLevel( logging.DEBUG )
+	#logger.setLevel( logging.DEBUG )
+	logger.setLevel( logLevel )
 
 	ch = logging.StreamHandler()
 	ch.setLevel( logLevel )
