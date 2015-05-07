@@ -12,6 +12,7 @@ from modules  import FS
 from time     import sleep, gmtime, mktime
 
 import logging
+logger = logging.getLogger()
 
 ############## DEFAULTS
 
@@ -44,34 +45,41 @@ def getPluginHelp( plugin, params ):
         print('\nIt is not possible to show help for "%s" module. ERROR:\n\t%s\n' % (plugin_name, err) )
     except ImportError as err:
         #logger.error('\nNo module with "%s" is installed. ERROR:\n\t%s\n' % (plugin_name, err))
-        print('\nNo module with "%s" is installed. ERROR:\n\t%s\n' % (plugin_name, err))
-
+        print('\nNo module with "%s" name is found. ERROR:\n\t%s\n' % (plugin_name, err))
+        print('Consider checking the installed plugins')
+        return False
     exit(1)
 
 
+# Print out plugin help
+def displayPluinHelp( data ):
+    if not data: return False
+    plugin = data[0]
+    params = data[1:]
+    getPluginHelp( plugin=plugin, params=params )
+
+
 # Print out list of installed plugins
-def listPlugins( ):
-    logger.info("\nList of installed plugins:")
+def listPlugins( data=None ):
+    displayPluinHelp( data=data )
+    #logger.info("\nList of installed plugins:")
+    print("\nList of installed plugins:")
     #config['LIST_ACTIONS'] = True
     from glob import glob
     modules = glob("./modules/plugin_*.py")
     for module in modules:
         print( "\t%s" % module[17:-3])
-    logger.info("\nTo read plugin documentation, run `./cmdExec.py -h PLUGIN_NAME` command.\n")
+    logger.info("\nTo read plugin documentation, run `./cmdExec.py (-h|-p) PLUGIN_NAME` command.\n")
 
 
 # Help message
 def displayHelp( data ):
-    data.pop( data.index('-h') )
-    if data:
-        plugin = data[0]
-        params = data[1:]
-        getPluginHelp( plugin=plugin, params=params )
+    displayPluinHelp( data = data )
 
     print "Usage: %s [-h PLUGIN] [-v] [-c CONFIG] -p|-l|ACTION"
     print "\t-v          : display debug messages"
     print "\t-h [PLUGIN] : display usage help, or display PLUGIN help"
-    print "\t-p          : display list of installed plugin modules"
+    print "\t-p [PLUGIN] : display list of installed plugin modules, or display PLUGIN help"
     print "\t-c CONFIG   : use specified config file instead of default \"%s\"" % config['DEFAULT_CONFIG']
     #print "\t-p        : don't execute actions, just display them (the same as -l ACTION)"
     print "\t-l          : display list of available commands"
@@ -79,31 +87,59 @@ def displayHelp( data ):
     print ""
     exit(1)
 
+# Set up logging
+def setLogging( args ):
+    result = []
+    index  = 0
+    for arg in args:
+        index += 1
+        # Enable debug
+        if arg == '-v':
+            print("Debug is enabled")
+            config['DEFAULT_LOGLEVEL'] = logging.DEBUG
+        # Change logfile location
+        elif arg == '-c':
+            config['DEFAULT_CONFIG'] = args[index]
+        else:
+            result.append( arg )
+
+    # Enable logger
+    FS.setLogging( logFileName = config['DEFAULT_LOG'], logLevel=config['DEFAULT_LOGLEVEL'] )
+    logger.debug("following list of args will be parsed: %s" % result)
+    return result
+
 
 # Parse command line arguments
 def parseArgv( config, logger ):
+    args = setLogging( argv[1:] )
     logger.debug("Reading program parameters:")
-    if len(argv) < 2: argv.append('-h')
+    if len(args) < 1: args.append('-h')
+    #if len(argv) < 2: argv.append('-h')
 
     prevcmd   = ''
-    for arg in argv[1:]:
-        if   arg == '-h':     displayHelp(data=argv[1:])
-        elif arg == '-c':     logger.info("\tCustom config file is used")
-        elif arg == '-v':
-            print("Debug is enabled")
-            config['DEFAULT_LOGLEVEL'] = logging.DEBUG
+    argindex  = 0
+    for arg in args:
+    #for arg in argv[1:]:
+        argindex += 1
+        #if   arg == '-h':     displayHelp(data=argv[1:])
+        if   arg == '-h':     displayHelp(data=args[argindex:])
+        #elif arg == '-c':     logger.info("\tCustom config file is used")
+        #elif arg == '-v':
+        #    print("Debug is enabled")
+        #    config['DEFAULT_LOGLEVEL'] = logging.DEBUG
         elif arg == '-p':
             #config['DONT_EXECUTE'] = True
             #logger.info("\tDont'e execute flag is setup")
-            listPlugins()
+            listPlugins(data=args[argindex:])
             exit(1)
         elif arg == '-l':
             config['LIST_ACTIONS'] = True
             logger.info("List actions selected")
         # arg is a COMMAND or FILE Path
         else:
-            if prevcmd == '-c':  config['DEFAULT_CONFIG'] = arg
-            elif not config['ACTION']:
+            #if prevcmd == '-c':  config['DEFAULT_CONFIG'] = arg
+            if not config['ACTION']:
+            #elif not config['ACTION']:
                 logger.info( "\tSelected action is \"%s\"" % arg )
                 config['ACTION'] = arg
             else:
@@ -122,7 +158,7 @@ if __name__ == "__main__":
     parseArgv( config, logger )
 
     # Open the log files according to run parameters
-    FS.setLogging( logFileName = config['DEFAULT_LOG'], logLevel=config['DEFAULT_LOGLEVEL'] )
+    #FS.setLogging( logFileName = config['DEFAULT_LOG'], logLevel=config['DEFAULT_LOGLEVEL'] )
 
     #conf   = FS.ConfigStorage( confAddr=config['DEFAULT_CONFIG'], actionName=config['ACTION'] )
     #executor = CommandExecutor( config=config, execFunc=ExecLib.execAction )
