@@ -12,7 +12,6 @@ from modules  import FS
 from time     import sleep, gmtime, mktime
 
 import logging
-logger = logging.getLogger()
 
 ############## DEFAULTS
 
@@ -114,19 +113,12 @@ def parseArgv( config, logger ):
     args = setLogging( argv[1:] )
     logger.debug("Reading program parameters:")
     if len(args) < 1: args.append('-h')
-    #if len(argv) < 2: argv.append('-h')
 
     prevcmd   = ''
     argindex  = 0
     for arg in args:
-    #for arg in argv[1:]:
         argindex += 1
-        #if   arg == '-h':     displayHelp(data=argv[1:])
         if   arg == '-h':     displayHelp(data=args[argindex:])
-        #elif arg == '-c':     logger.info("\tCustom config file is used")
-        #elif arg == '-v':
-        #    print("Debug is enabled")
-        #    config['DEFAULT_LOGLEVEL'] = logging.DEBUG
         elif arg == '-p':
             #config['DONT_EXECUTE'] = True
             #logger.info("\tDont'e execute flag is setup")
@@ -137,9 +129,7 @@ def parseArgv( config, logger ):
             logger.info("List actions selected")
         # arg is a COMMAND or FILE Path
         else:
-            #if prevcmd == '-c':  config['DEFAULT_CONFIG'] = arg
             if not config['ACTION']:
-            #elif not config['ACTION']:
                 logger.info( "\tSelected action is \"%s\"" % arg )
                 config['ACTION'] = arg
             else:
@@ -157,8 +147,6 @@ if __name__ == "__main__":
     logger = logging.getLogger()
     parseArgv( config, logger )
 
-    # Open the log files according to run parameters
-    #FS.setLogging( logFileName = config['DEFAULT_LOG'], logLevel=config['DEFAULT_LOGLEVEL'] )
 
     #conf   = FS.ConfigStorage( confAddr=config['DEFAULT_CONFIG'], actionName=config['ACTION'] )
     #executor = CommandExecutor( config=config, execFunc=ExecLib.execAction )
