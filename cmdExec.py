@@ -27,6 +27,8 @@ config = {
     'LIST_ACTIONS'     : False,
     'ACTION'           : None,
     'lastOutput'       : '',
+    # PARAMETES will be obtained from readline
+    'PARAMETERS'       : {}
 }
 
 ############## PROCEDURES
@@ -75,7 +77,7 @@ def listPlugins( data=None ):
 def displayHelp( data ):
     displayPluinHelp( data = data )
 
-    print "Usage: %s [-h PLUGIN] [-v] [-c CONFIG] -p|-l|ACTION"
+    print "Usage: %s [-h PLUGIN] [-v] [-c CONFIG] -p|-l|ACTION [PARAMETERS...]"
     print "\t-v          : display debug messages"
     print "\t-h [PLUGIN] : display usage help, or display PLUGIN help"
     print "\t-p [PLUGIN] : display list of installed plugin modules, or display PLUGIN help"
@@ -83,8 +85,26 @@ def displayHelp( data ):
     #print "\t-p        : don't execute actions, just display them (the same as -l ACTION)"
     print "\t-l          : display list of available commands"
     print "\tACTION      : execute ACTION defined in config file"
+    print "\tPARAMETERS  : list of KEY:VAL data that will be used in actions as variables"
     print ""
     exit(1)
+
+# Get parameters from command line
+def getParameters( data ):
+    """
+        All provided data will be split by ":" sign and converted to the dictionary:
+        "NAME:VALUE" ->  "NAME" : "VALUE"
+        "NAME"       ->  "NAME" : True
+    """
+    logger.debug("Provided parameters: %s" % data)
+    for parameter in data:
+        try:
+            key, val = parameter.split(':')
+        except ValueError:
+            key, val = parameter, True
+        config['PARAMETERS'][key] = val
+    logger.debug("Resulting data: %s" % config['PARAMETERS'])
+
 
 # Set up logging
 def setLogging( args ):
@@ -133,8 +153,10 @@ def parseArgv( config, logger ):
                 logger.info( "\tSelected action is \"%s\"" % arg )
                 config['ACTION'] = arg
             else:
-                logger.error("\n\tToo much arguments! Exit.\n")
-                displayHelp()
+                getParameters( data = args[argindex-1:] )
+                #logger.error("\n\tToo much arguments! Exit.\n")
+                #displayHelp()
+                #exit(1)
         prevcmd = arg
 
 
