@@ -8,8 +8,8 @@
 
 """
 
-#import logging
-#logger = logging.getLogger()
+import logging
+logger = logging.getLogger()
 
 
 
@@ -80,7 +80,8 @@ def help( params ):
 ############################################
 
 def run( action, config, data):
-    #print "--------print-----------"
+    logger.debug( "--> Running print command with '%s' parameter" % data["param"] )
+    #print "--------print----------- %s" % data["param"]
     #print data
     exec_parameters = {
          "default" : printOutput

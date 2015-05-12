@@ -175,8 +175,9 @@ class CommandExecutor():
 
         if lastresult[0] != 0:
             #print("The \"%s\" command returned (%s) errorcode. Returned output:\n\t%s\n" %
-            logger.info("The \"%s\" command returned (%s) errorcode. Returned output:\n\t%s\n" %
-                        (action, lastresult[0], lastresult[1]) )
+            logger.info("The \"%s\" command returned (%s) errorcode.\n" % (action, lastresult[0]) )
+            #logger.info("The \"%s\" command returned (%s) errorcode. Returned output:\n\t%s\n" %
+            #            (action, lastresult[0], lastresult[1]) )
 
             for num, action in enumerate( lastresult[2][::-1] ):
                 result = self.execFunc( action=action, listoferrors=[], genCMD=self.genCMD, num=num+1 )
@@ -210,6 +211,7 @@ class CommandExecutor():
 
 
 
+
     #############################
     # Executes list of actions
     #
@@ -223,12 +225,15 @@ class CommandExecutor():
         fallbacklist         = []
         config               = self.yaml.config
         config["lastOutput"] = ""
+        config["lastResult"] = 0
+        config["exitStatus"] = 0
         data = {
              "genCMD"     : self.genCMD
             ,"num"        : 0
             ,"lastOutput" : ""
             ,"lastResult" : None
             ,"failif"     : ""
+            ,"failifnot"  : ""
         }
         #print "------------->"
         #print config
@@ -244,9 +249,15 @@ class CommandExecutor():
 
             result = ""
 
+            # Check if previous run of action command were failed
+            #if config["exitStatus"] != 0 and not cancelonerror: return (lastresult[0], lastresult[1], fallbacklist )
+            #if config["exitStatus"] != 0 and not cancelonerror: return (config["exitStatus"], lastresult[1], fallbacklist )
+
             # RUN Action
             if action:
+                if config["exitStatus"] != 0 and not cancelonerror: return (config["exitStatus"], lastresult[1], fallbacklist )
                 logger.debug( "\n## RUNNING ACTION" )
+                logger.info("")
                 #result = self.execStep( step=step, action=action, config=config, data=data )
                 data[ "plugin" ] = "action"
                 data[ "param"  ] = action
@@ -257,39 +268,35 @@ class CommandExecutor():
                 )
                 totalresults.append( result[0] )
 
-            # Now we can run other action plugins
-            for plugin, param in step.iteritems():
-                logger.debug( "\n## RUNNING Other commands" )
-                data[ "plugin" ] = plugin
-                data[ "param"  ] = param
-                self.actions["plugin_"+plugin].run(
-                                     action  = action
-                                    ,config  = config
-                                    ,data    = data
-                )
+            else:
+                # Now we can run other action plugins
+                for plugin, param in step.iteritems():
+                    logger.debug( "\n## RUNNING Other commands" )
+                    data[ "plugin" ] = plugin
+                    data[ "param"  ] = param
+                    result = self.actions["plugin_"+plugin].run(
+                                         action  = action
+                                        ,config  = config
+                                        ,data    = data
+                    )
 
             if not result: continue
-            #else:  result = list( result )
 
             if lastresult[0] == 0: lastresult = result
 
-            # Check output value of the command execution
-            if result[0] == -1:
-                logger.debug("\nError template \"%s\" found in the command execution output.\n" % failif[ result[1] ] )
+            if result[0] != 0:
+                if config["exitStatus"] == 0:
+                    #print( "Changing exit status to '%s'" % result[0] )
+                    config["exitStatus"] = result[0]
+                logger.error("--> ERROR: %s\n" % result[1] )
 
-            # Check for errors during command execution
-            if result[0] < -1:
-                logger.error("\nERROR: %s\n" % result[1] )
-
-            ## Check if result contains all required data
-            #if result[0] == 0: lastresult[0] = resultContainsAllOf( result[1], failifnot )
-
-            if lastresult[0] != 0 and not cancelonerror: return (lastresult[0], lastresult[1], fallbacklist )
+            #if lastresult[0] != 0 and not cancelonerror: return (lastresult[0], lastresult[1], fallbacklist )
             
             config["lastOutput"] = lastresult[1]
 
     
-        return [lastresult[0], lastresult[1], fallbacklist]
+        #return [lastresult[0], lastresult[1], fallbacklist]
+        return [config["exitStatus"], lastresult[1], fallbacklist]
 
 
 

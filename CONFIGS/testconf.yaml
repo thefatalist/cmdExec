@@ -115,7 +115,7 @@ test2:
 # Create test VM.
 # Verify that it is deployed successfuly
 #####################
-create_vm:
+openstack_vm_create:
   # Parameters specific for that test
   config:
     id              : 10
@@ -139,23 +139,130 @@ create_vm:
        - -v
        - patterns       :
                - '%(instance_name)s'
+  - print     :   onfail
+
+  - action    :
+       cmd        : nova_boot
+       print      : False
+  - print     :   onfail
+     
+  - sleep     : 1.0
+
+  - action    :
+      cmd        : nova_log
+      retry_count   : 10
+      retry_sleep   : 10
+      print         : False
+      failifnot  :
+       - ' login:'
 
   - print     :   onfail
 
-     
 
-#  - sleep     : 1.0
-#
-#  - action    : 
-#       cmd        : vm_not_exists
-#       retry_count   : 10
-#       retry_sleep   : 10
-#       print         : False
-#   - print       :  always
-#
-#   - action    :
-#       cmd        : nova_log
-#       failifnot  :
-#        - ' login:'
 
+######################
+# Check that VM is running without any errors
+# Verify that it is deployed correctly, in running state and has no errors in log console
+#####################
+openstack_vm_ok:
+  # Parameters specific for that test
+  config:
+    id              : 10
+    ignoreerrors    : False
+    hostname        : bxcloudcompute%(id)s
+    instance_name   : test_compute%(id)s
+
+  # List of execution lines
+  execlist:
+
+  # Check that script has loaded environment variables to run openstack commands
+  - action    : 
+       cmd        : nova_env
+       print      : True
+
+  # Check that VM is deployed
+  - action    :
+       cmd        : nova_list
+       print      : False
+
+  - grep      :
+#       - dont_fail
+#       - -v
+       - patterns       :
+               - '%(instance_name)s'
+  - print     :   onfail
+
+  # Ensure that VM do not have errors in logs
+  - action    :
+      cmd        : nova_log
+      retry_count   : 3
+      retry_sleep   : 2
+      print         : False
+      failifnot  :
+       - ' login:'
+      failif:
+       - ' ERROR:'
+       - 'CRITICAL'
+
+  #- print     :   onfail
+  
+  #- grep      :
+  #     - -v
+  #     - listerrors
+  #     - patterns       :
+  #              - 'ERROR'
+  #              - 'CRITICAL'
+  #              #- 'BIOS-e820'
+  #              #- 'CentOS release 6.6'
+
+  #- print     :   onfail
+
+
+
+######################
+# Delete existing VM
+# Deletes VM. If that fails, tries to do force delete
+#####################
+openstack_vm_delete:
+  # Parameters specific for that test
+  config:
+    id              : 10
+    ignoreerrors    : False
+    hostname        : bxcloudcompute%(id)s
+    instance_name   : test_compute%(id)s
+
+  # List of execution lines
+  execlist:
+  - action    : 
+       cmd        : nova_env
+       print      : True
+
+  - action    :
+       cmd        : nova_list
+       #cmd        : vm_not_exists
+       print      : False
+
+  - grep      :
+#       - dont_fail
+#       - -v
+       - patterns       :
+               - '%(instance_name)s'
+  - print     :   onfail
+
+  - action    :
+      cmd        : nova_delete_vm
+      retry_count   : 10
+      retry_sleep   : 2
+      print         : False
+
+  - action    :
+       cmd        : nova_list
+       #cmd        : vm_not_exists
+       print      : False
+       fallback   : nova_force_delete_1st
+
+  - grep      :
+       - -v
+       - patterns       :
+               - '%(instance_name)s'
 
