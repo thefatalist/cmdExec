@@ -125,38 +125,38 @@ openstack_vm_create:
 
   # List of execution lines
   execlist:
+
+  # Check that openstack key is imported (source ~/keystone_TENNANT)
   - action    : 
-       cmd        : nova_env
-       print      : True
+      cmd        : nova_env
+      print      : True
 
+  # Check that VM is not exists
   - action    :
-       cmd        : nova_list
-       #cmd        : vm_not_exists
-       print      : False
-
+      cmd        : nova_list
+      print      : False
   - grep      :
-#       - dont_fail
-       - -v
-       - patterns       :
+      - -v
+      - patterns       :
                - '%(instance_name)s'
   - print     :   onfail
 
+  # Start VM
   - action    :
-       cmd        : nova_boot
-       print      : False
+      cmd          : nova_boot
+      print        : False
   - print     :   onfail
      
-  - sleep     : 1.0
-
+  # Check that VM appeared in list of VMs
   - action    :
-      cmd        : nova_log
-      retry_count   : 10
-      retry_sleep   : 10
-      print         : False
-      failifnot  :
-       - ' login:'
-
+      cmd          : nova_list
+      print        : False
+      retry_count  : 5
+      retry_sleep  : 2
+      failifnot    :
+       - '%(instance_name)s'
   - print     :   onfail
+
 
 
 
@@ -182,8 +182,8 @@ openstack_vm_ok:
 
   # Check that VM is deployed
   - action    :
-       cmd        : nova_list
-       print      : False
+      cmd        : nova_list
+      print      : False
 
   - grep      :
 #       - dont_fail
@@ -195,27 +195,14 @@ openstack_vm_ok:
   # Ensure that VM do not have errors in logs
   - action    :
       cmd        : nova_log
-      retry_count   : 3
-      retry_sleep   : 2
+      retry_count   : 10
+      retry_sleep   : 10
       print         : False
       failifnot  :
        - ' login:'
       failif:
        - ' ERROR:'
        - 'CRITICAL'
-
-  #- print     :   onfail
-  
-  #- grep      :
-  #     - -v
-  #     - listerrors
-  #     - patterns       :
-  #              - 'ERROR'
-  #              - 'CRITICAL'
-  #              #- 'BIOS-e820'
-  #              #- 'CentOS release 6.6'
-
-  #- print     :   onfail
 
 
 
@@ -233,15 +220,18 @@ openstack_vm_delete:
 
   # List of execution lines
   execlist:
+
+  # Check that openstack key is imported (source ~/keystone_TENNANT)
   - action    : 
        cmd        : nova_env
        print      : True
 
+  # Check that VM exists
   - action    :
        cmd        : nova_list
-       #cmd        : vm_not_exists
        print      : False
 
+  # Check that VM exists
   - grep      :
 #       - dont_fail
 #       - -v
@@ -249,20 +239,21 @@ openstack_vm_delete:
                - '%(instance_name)s'
   - print     :   onfail
 
+  # Execute the delete command
   - action    :
       cmd        : nova_delete_vm
       retry_count   : 10
       retry_sleep   : 2
       print         : False
 
+  # Check that VM disappeared
   - action    :
-       cmd        : nova_list
-       #cmd        : vm_not_exists
-       print      : False
-       fallback   : nova_force_delete_1st
-
-  - grep      :
-       - -v
-       - patterns       :
-               - '%(instance_name)s'
+      cmd        : nova_list
+      print      : False
+      retry_count   : 10
+      retry_sleep   : 3
+      failif     :
+       - '%(instance_name)s'
+      fallback   : nova_force_delete_1st
+  - print     :   onfail
 

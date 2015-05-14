@@ -49,6 +49,14 @@ def failifCheck( data, failif ):
     return (result_patterns, result_lines)
 
 
+# Replace variable names with config parameters
+def replaceList( data, config ):
+    result = []
+    for el in data:
+        result.append( el % config )
+    return result
+
+
 # Check if failifNot action matched
 # Returns the array of checks that still missing in program output
 def failifNotCheck( data, failifnot ):
@@ -185,7 +193,7 @@ def help( *params ):
     print( "\t" )
     print( "\t\tfailif:" )
     print( "\t\t   List of strings, which appearance in program execution output will cause error" )
-    print( "\t\t   (NOTE!) In case if any of strings are matched. No retry cycle will be performed" )
+    #print( "\t\t   (NOTE!) In case if any of strings are matched. No retry cycle will be performed" )
     print( "\t" )
     print( "\t\tfailifnot" )
     print( "\t\t   Script will return error code in case if output doesn't contain this set of strings" )
@@ -228,6 +236,8 @@ def run( action, config, data):
     actionCMD = genCMD( action["cmd"] )
     failif    = param.get("failif", [])
     failifnot = param.get("failifnot", [])
+    failif    = replaceList( data=failif,    config=config)
+    failifnot = replaceList( data=failifnot, config=config)
 
     if not action: return [0,None]
 
@@ -240,14 +250,10 @@ def run( action, config, data):
         #result = execCMD( actionCMD, listoferrors=data["failif"], silent=(not action.get("print", False)) )
         result = execCMD( actionCMD, failif=failif, failifnot=failifnot, silent=(not action.get("print", False)) )
         print( printIndent+"FINISHED with [%s] exit code" % (result[0]) )
-        if result[0] in (-1,): break
-        #result = execAction(
-        #                     action       = action
-        #                    ,listoferrors = config.get("errorlist", [])
-        #                    ,genCMD       = data["genCMD"]
-        #                    ,num          = data["num"]+1
-        #                    ,silent       = True
-        #                    )
+        
+        # Immediate exit (stop loop) in case if error in following list:
+        #if result[0] in (-1,): break
+
         if not result: break
 
         if (result[0] == 0) or (retry_count == i+1) :
