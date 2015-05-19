@@ -22,30 +22,35 @@ config:
 
 
 commands:
-    test1             : 'test'
-    always_true       : 'true'
-    always_false      : 'false'
-    list              : 'ls -l %(folder)s'
-    hostname          : 'echo %(hostname)s'
-    getversion        : 'echo $LOGNAME %(version)s : %(comment)s'
-    list              : 'ls -l %(folder)s'
-    hostname          : 'echo %(hostname)s'
-    getversion        : 'echo $LOGNAME %(version)s : %(comment)s'
-    nova_list         : 'nova list'
-    vm_exists         : '/bin/bash -c "nova list | grep %(instance_name)s'
-    vm_not_exists     : '/bin/bash -c "! nova list | grep %(instance_name)s'
-    vm_is_running     : '/bin/bash -c "nova list | grep %(instance_name)s | grep Running"'
-    vm_is_stopped     : '/bin/bash -c "nova list | grep %(instance_name)s | grep Shutdown"'
-    nova_stop_vm      : 'nova stop %(instance_name)s'
-    nova_delete_vm    : 'nova delete %(instance_name)s'
-    nova_delete_1st_vm  : /bin/bash -c "nova delete `nova list | grep %(instance_name)s | head -n1 | awk '{print $2}'`"
-    nova_force_delete : 'nova force-delete %(instance_name)s'
+    test1              : 'test'
+    always_true        : 'true'
+    always_false       : 'false'
+    list               : 'ls -l %(folder)s'
+    hostname           : 'echo %(hostname)s'
+    getversion         : 'echo $LOGNAME %(version)s : %(comment)s'
+    list               : 'ls -l %(folder)s'
+    hostname           : 'echo %(hostname)s'
+    getversion         : 'echo $LOGNAME %(version)s : %(comment)s'
+    nova_list          : 'nova list'
+    vm_exists          : '/bin/bash -c "nova list | grep %(instance_name)s'
+    vm_not_exists      : '/bin/bash -c "! nova list | grep %(instance_name)s'
+    vm_is_running      :  '/bin/bash -c "nova list | grep %(instance_name)s | grep Running"'
+    vm_is_stopped      : '/bin/bash -c "nova list | grep %(instance_name)s | grep Shutdown"'
+    nova_stop_vm       : 'nova stop %(instance_name)s'
+    nova_delete_vm     : 'nova delete %(instance_name)s'
+    nova_delete_1st_vm : /bin/bash -c "nova delete `nova list | grep %(instance_name)s | head -n1 | awk '{print $2}'`"
+    nova_force_delete  : 'nova force-delete %(instance_name)s'
     nova_force_delete_1st : '/bin/bash -c "nova force-delete `nova list | grep %(instance_name)s | head -n1 | cut -d" " -f2`"'
-    nova_boot         : 'nova boot --image %(instace_id)s --flavor 2 --availability-zone nova:%(hostname)s --key-name %(ssh_key)s --nic %(instance_net)s "%(instance_name)s"'
-    nova_log          : 'nova console-log %(instance_name)s'
-    env               : 'env'
-    output_grep       : /bin/bash -c "echo -e "%(lastOutput)s" | grep %(grep)s"
-    output_nogrep     : /bin/bash -c "! echo -e "%(lastOutput)s" | grep %(grep)s"
+    nova_boot          : 'nova boot --image %(instace_id)s --flavor 2 --availability-zone nova:%(hostname)s --key-name %(ssh_key)s --nic %(instance_net)s "%(instance_name)s"'
+    nova_log           : 'nova console-log %(instance_name)s'
+    env                : 'env'
+    output_grep        : /bin/bash -c "echo -e "%(lastOutput)s" | grep %(grep)s"
+    output_nogrep      : /bin/bash -c "! echo -e "%(lastOutput)s" | grep %(grep)s"
+    cinder_list        : 'cinder list'
+    cinder_status      : /bin/bash -c "cinder list | grep '%(volume_name)s'"
+    cinder_hash        : /bin/bash -c "cinder list | grep '%(volume_hash)s'"
+    cinder_storages    : 'cinder type-list'
+    cinder_create      : 'cinder create --volume-type="%(compute_hash)s" --display-name="%(volume_name)s" 150'
 
 # NEW ONES:
     nova_env          : /bin/bash -c "! [ -z $OS_USERNAME ]"
@@ -108,8 +113,7 @@ test2:
     print   :    always
 
 
-#########################################
-# Managing Compute 05
+
 
 ######################
 # Create test VM.
@@ -257,3 +261,137 @@ openstack_vm_delete:
       fallback   : nova_force_delete_1st
   - print     :   onfail
 
+
+
+
+######################
+# Create a test Volume.
+# Verify that it is created successfuly
+#####################
+openstack_volume_create:
+  # Parameters specific for that test
+  config:
+    id              : 12
+    ignoreerrors    : False
+    hostname        : bxcloudcompute%(id)s
+    compute_name    : COMPUTE%(id)s 
+    compute_hash    : 'bba0e28e-eb7e-4f5f-abcc-8cc7fcf752b5'
+    volume_name     : test_volume%(id)s
+
+  # List of execution lines
+  execlist:
+
+  # Check that openstack key is imported (source ~/keystone_TENNANT)
+  - action    : 
+      cmd        : nova_env
+      print      : True
+
+  # Check that VM is not exists
+  - action    :
+      cmd        : cinder_list
+      print      : False
+      #print      : True
+  - grep      :
+      - -v
+      - patterns       :
+               - '%(volume_name)s'
+  - print     :   onfail
+
+  # Get the storage ID
+  - action    :
+      cmd        : cinder_storages
+      print      : False
+  - grep      :
+      - patterns       :
+        # space after compute name is needed to make sure that exact compute is chosen
+        - '%(compute_name)s '
+  - get_variable             :
+        - line       : 0
+        - delimeters : '|'
+        - index      : '0:1'
+        - pattern    : '^........-....-....-....-............$'
+        - saveas     : 'compute_hash'
+        #- dontfail   : True
+
+  # Create Volume
+  - action    :
+      cmd          : cinder_create
+      #print        : False
+      print        : True
+  #- print     :   onfail
+     
+  # Check that VM appeared in list of VMs
+  - action    :
+      cmd          : cinder_status
+      print        : False
+      #print        : True
+      retry_count  : 5
+      retry_sleep  : 3
+      failifnot    :
+       - '%(volume_name)s'
+       - 'available'
+  - print     :   onfail
+
+  - grep      :
+      - patterns       :
+        - '%(compute_name)s'
+
+
+
+######################
+# Delete a test Volume.
+#    Check that volume is in 'created' state
+#    if it is not - fail, and try to force delete it
+#####################
+openstack_volume_delete:
+  # Parameters specific for that test
+  config:
+    id              : 12
+    ignoreerrors    : False
+    compute_name    : COMPUTE%(id)s 
+    volume_hash     : '6f21e96e-b2f1-48cf-916e-3630a1986ed6'
+    volume_name     : test_volume%(id)s
+
+  # List of execution lines
+  execlist:
+
+  # Check that openstack key is imported (source ~/keystone_TENNANT)
+  - action    : 
+      cmd        : nova_env
+      print      : True
+
+  # Get the volume ID
+  - action    :
+      cmd        : cinder_list
+      print      : False
+  - grep      :
+      - patterns       :
+        # space after compute name is needed to make sure that exact compute is chosen
+        - '%(volume_name)s '
+  - get_variable             :
+        - line       : 0
+        - delimeters : '|'
+        - index      : '0:1'
+        - pattern    : '^........-....-....-....-............$'
+        - saveas     : 'volume_hash'
+        #- dontfail   : True
+
+  # Check that VM appeared in list of VMs
+  - action    :
+      cmd          : cinder_hash
+      #print        : False
+      print        : True
+      retry_count  : 5
+      retry_sleep  : 3
+      failifnot    :
+       - '%(volume_name)s'
+       - 'available'
+  - print     :   onfail
+  
+  # Create Volume
+  #- action    :
+  #    cmd          : cinder_delete
+  #    #print        : False
+  #    print        : True
+  #- print     :   onfail
+     
