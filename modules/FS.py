@@ -18,6 +18,30 @@ import logging
 
 logger = None
 
+################## USEFUL FUNCTIONS
+# Substitute variable data if it is necessary
+def getSubstitutedVariable( key, config ):
+    #if '%(' not in data[key]: return data[key]
+    try:
+        value = config[key] % config
+    except TypeError:
+        value = config[key]
+        return True
+    if '%(' not in value:
+        config[key] = str(value)
+        return True
+    logger.debug('\t\tNested substitution for key "%s" is needed. Current value is "%s"' % (key, config[key]))
+    return False
+
+
+# Substitute all strings
+def getSubstitutedDict( config ):
+    repeat = False
+    for key in config.iterkeys():
+        if not getSubstitutedVariable( key=key, config=config ): repeat = True
+    if repeat: getSubstitutedDict( config=config )
+
+
 ################## CLASSES
 class ConfigStorage():
     def __init__( self, confAddr, actionName, cmdParameters ):
@@ -80,12 +104,13 @@ class ConfigStorage():
 
         logger.debug("==============================")
         logger.debug("\nResulting set of config options:")
+        getSubstitutedDict( config=config )
         for key,val in config.iteritems():
-            try:
-                val = val % config
-            except TypeError:
-                val = val
-            config[key] = val
+            #try:
+            #    val = val % config
+            #except TypeError:
+            #    val = val
+            #config[key] = val
             logger.debug("\t       %20s [ %-45s ]" % (key, val) )
 
 

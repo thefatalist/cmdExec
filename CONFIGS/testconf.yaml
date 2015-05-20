@@ -49,10 +49,10 @@ commands:
     output_grep        : /bin/bash -c "echo -e "%(lastOutput)s" | grep %(grep)s"
     output_nogrep      : /bin/bash -c "! echo -e "%(lastOutput)s" | grep %(grep)s"
     cinder_list        : 'cinder list'
-    cinder_list_grep      : /bin/bash -c "cinder list | grep '%(volume_name)s'"
+    cinder_list_grep   : /bin/bash -c "cinder list | grep '%(volume_name)s'"
     cinder_hash        : /bin/bash -c "cinder list | grep '%(volume_hash)s'"
     cinder_storages    : 'cinder type-list'
-    cinder_create      : 'cinder create --volume-type="%(compute_hash)s" --display-name="%(volume_name)s" 1'
+    cinder_create      : 'cinder create --volume-type="%(cinder_hash)s" --display-name="%(volume_name)s" 1'
     cinder_delete      : 'cinder delete %(volume_hash)s'
 
 # NEW ONES:
@@ -277,8 +277,8 @@ openstack_volume_create:
     id              : 12
     ignoreerrors    : False
     hostname        : bxcloudcompute%(id)s
-    compute_name    : COMPUTE%(id)s 
-    compute_hash    : 'bba0e28e-eb7e-4f5f-abcc-8cc7fcf752b5'
+    cinder_name    : COMPUTE%(id)s 
+    cinder_hash    : '????????-????-????-????-????????????'
     volume_name     : test_volume%(id)s
 
   # List of execution lines
@@ -297,7 +297,7 @@ openstack_volume_create:
   - grep      :
       - -v
       - patterns       :
-               - '%(volume_name)s'
+               - '%(cinder_name)s'
   - print     :   onfail
 
   # Get the storage ID
@@ -306,14 +306,13 @@ openstack_volume_create:
       print      : False
   - grep      :
       - patterns       :
-        # space after compute name is needed to make sure that exact compute is chosen
-        - '%(compute_name)s '
+        - '%(cinder_name)s'
   - get_variable             :
         - line       : 0
         - delimeters : '|'
         - index      : '0:1'
         - pattern    : '^........-....-....-....-............$'
-        - saveas     : 'compute_hash'
+        - saveas     : 'cinder_hash'
         #- dontfail   : True
 
   # Create Volume
@@ -335,10 +334,6 @@ openstack_volume_create:
        - 'available'
   - print     :   onfail
 
-  - grep      :
-      - patterns       :
-        - '%(compute_name)s'
-
 
 
 ######################
@@ -352,7 +347,7 @@ openstack_volume_delete:
     id              : 12
     ignoreerrors    : False
     compute_name    : COMPUTE%(id)s 
-    volume_hash     : '6f21e96e-b2f1-48cf-916e-3630a1986ed6'
+    volume_hash     : '????????-????-????-????-????????????'
     volume_name     : test_volume%(id)s
 
   # List of execution lines
@@ -411,13 +406,14 @@ openstack_volume_attach:
   # Parameters specific for that test
   config:
     id              : 12
-    volID           : '%(id)s'
-    vmID            : '%(id)s'
+    volNAME         : 'COMPUTE%(volID)s'
+    volID           : "%(id)s"
+    vmID            : "%(id)s"
     ignoreerrors    : False
     instance_name   : test_compute%(vmID)s
     instance_hash   : '????????-????-????-????-????????????'
     volume_hash     : '????????-????-????-????-????????????'
-    volume_name     : test_volume%(volID)s
+    volume_name     : 'test_volume%(volID)s'
 
   # List of execution lines
   execlist:
@@ -465,7 +461,8 @@ openstack_volume_attach:
   # Attach volume to the VM
   - action    :
       cmd          : nova_attach_vol
-      print        : False
+      #print        : False
+      print        : True
   - print     :   onfail
 
   # Check that VM appeared in list of VMs
