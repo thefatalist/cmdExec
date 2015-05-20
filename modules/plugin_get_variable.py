@@ -163,4 +163,4 @@ def run( action, config, data):
         config[run_parameters["saveas"]] = return_line
 
     if run_parameters["dontfail"]: return_code = 0
-    return (return_code, return_line)
+    return (return_code, config["lastOutput"])
