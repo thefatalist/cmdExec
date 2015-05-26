@@ -136,12 +136,16 @@ openstack_vm_create:
   # Check that openstack key is imported (source ~/keystone_TENNANT)
   - action    : 
       cmd        : nova_env
-      print      : True
+      print      : False
+  - echo      :
+      message    : 'OpenStack environment is not setup. Please run the "source ~/keystone_X" to set environment'
+      when       : onfail
 
   # Check that VM is not exists
   - action    :
       cmd        : nova_list
       print      : False
+  - fallback   : nova_delete_vm
   - grep      :
       - -v
       - patterns       :
@@ -186,6 +190,9 @@ openstack_vm_ok:
   - action    : 
        cmd        : nova_env
        print      : True
+  - echo      :
+      message    : 'OpenStack environment is not setup. Please run the "source ~/keystone_X" to set environment'
+      when       : onfail
 
   # Check that VM is deployed
   - action    :
@@ -210,6 +217,7 @@ openstack_vm_ok:
       failif:
        - ' ERROR:'
        - 'CRITICAL'
+  - print     :   onfail
 
 
 
@@ -232,6 +240,9 @@ openstack_vm_delete:
   - action    : 
        cmd        : nova_env
        print      : True
+  - echo      :
+      message    : 'OpenStack environment is not setup. Please run the "source ~/keystone_X" to set environment'
+      when       : onfail
 
   # Check that VM exists
   - action    :
@@ -288,6 +299,9 @@ openstack_volume_create:
   - action    : 
       cmd        : nova_env
       print      : True
+  - echo      :
+      message    : 'OpenStack environment is not setup. Please run the "source ~/keystone_X" to set environment'
+      when       : onfail
 
   # Check that VM is not exists
   - action    :
@@ -297,7 +311,7 @@ openstack_volume_create:
   - grep      :
       - -v
       - patterns       :
-               - '%(cinder_name)s'
+               - '%(volume_name)s'
   - print     :   onfail
 
   # Get the storage ID
@@ -333,7 +347,9 @@ openstack_volume_create:
        - '%(volume_name)s'
        - 'available'
   - print     :   onfail
-
+  - echo      :
+      message    : 'Check the "https://conf.booxdev.com/pages/viewpage.action?pageId=17105087" how to fix the issue.'
+      when       : onfail
 
 
 ######################
@@ -357,6 +373,9 @@ openstack_volume_delete:
   - action    : 
       cmd        : nova_env
       print      : True
+  - echo      :
+      message    : 'OpenStack environment is not setup. Please run the "source ~/keystone_X" to set environment'
+      when       : onfail
 
   # Get the volume ID
   - action    :
@@ -394,6 +413,9 @@ openstack_volume_delete:
       failif    :
        - '%(volume_hash)s'
   - print     :   onfail
+  - echo      :
+      message    : 'Check the "https://conf.booxdev.com/pages/viewpage.action?pageId=17105087" how to fix the issue.'
+      when       : onfail
      
 
 
@@ -422,6 +444,9 @@ openstack_volume_attach:
   - action    : 
       cmd        : nova_env
       print      : True
+  - echo      :
+      message    : 'OpenStack environment is not setup. Please run the "source ~/keystone_X" to set environment'
+      when       : onfail
 
   # Get the VM ID
   - action    :
@@ -499,6 +524,9 @@ openstack_volume_detach:
   - action    : 
       cmd        : nova_env
       print      : True
+  - echo      :
+      message    : 'OpenStack environment is not setup. Please run the "source ~/keystone_X" to set environment'
+      when       : onfail
 
   # Get the volume ID
   - action    :
