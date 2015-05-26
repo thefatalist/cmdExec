@@ -1,21 +1,19 @@
 config:
     version : 0.5
-    comment : 'Info server pattern file'
+    comment : 'Test yaml file'
     #homedir : ''
     homedir : '/etc/zabbix/log-parser/'
-    hostname: bxcloudcompute01
-    zbxhost : bxcloudcompute01.openstack.local_Log
+    hostname: host.local.domain
+    zbxhost : zabbix.host.com
     #zbxsrv  : zab01.booxdev.com
-    zbxsrv  : 10.2.0.168
+    zbxsrv  : 127.0.0.1
 
     # OpenStack configuration parameters
-    ssh_key        : PCOFFICE
+    ssh_key        : SSH_KEY
     nova_config    : /root/keystonerc_admin
-    #instace_id     : f94cf847-5642-4e15-882e-ccdeb9a01fc8
-    #instance_net   : net-id=382a3ebe-9360-4cdf-b3b6-988e46692435
     nova_config    : /root/keystonerc_admin
-    instace_id     : 5b4042f9-b405-4798-99be-6c88352e274c
-    instance_net   : net-id=382a3ebe-9360-4cdf-b3b6-988e46692435
+    instace_id     : '????????-????-????-????-????????????'
+    instance_net   : 'net-id=382a3ebe-????-????-????-????????????'
 
     #instance_name  : test_openstack_compute01
     #instance_name  : test_compute01
@@ -414,7 +412,7 @@ openstack_volume_delete:
        - '%(volume_hash)s'
   - print     :   onfail
   - echo      :
-      message    : 'Check the "https://conf.booxdev.com/pages/viewpage.action?pageId=17105087" how to fix the issue.'
+      message    : 'Check the "https://help.local/help?pageId=00001" how to fix the issue.'
       when       : onfail
      
 
