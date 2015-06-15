@@ -144,23 +144,13 @@ class CommandExecutor():
         else:
             print("List of commands to be executed for the \"%s\" action:" % action)
             print("\t%42s |   | %s" % ("== Action ==", "== Fallback action ==" ))
+            fallback = ''
             for num, step in enumerate( yaml.actions ):
                 status = ''
-                status += ' E'[ step.has_key("errorif") ]
-                status += ' N'[ step.has_key("errorifnot") ]
-                status += ' *'[ step.has_key("saveline") ]
-            
-# TODO:
-# Rewrite the output plugin!
-                action = "last output -> " + '|'.join( step.get("grep", "") )
-                if action == "last output -> ":
-                    action = "last output x> " + '|'.join( step.get("nogrep", "") )
-                if action == "last output x> ":
-############################
-                    action = step.get("action", {})
-                    action = action.get("cmd", "---")
-
-                print( "\t%-2s%40s |%s| %s" % (num+1, action, status, step.get("fallback", "---")) )
+                if step.has_key('action') or step.has_key('fallback'):
+                    step_action   = step.get('action',  {}).get('cmd','')
+                    step_fallback = step.get('fallback',{}).get('cmd','')
+                    print ("\t%42s |   | %s" % (step_action, step_fallback) )
 
 
     # Function which will execute selected action
@@ -174,15 +164,16 @@ class CommandExecutor():
         lastresult = self.execActionList( actionlist=self.yaml.actions, cancelonerror=cancelonerror )
 
         if lastresult[0] != 0:
-            #print("The \"%s\" command returned (%s) errorcode. Returned output:\n\t%s\n" %
             logger.info("The \"%s\" command returned (%s) errorcode.\n" % (action, lastresult[0]) )
-            #logger.info("The \"%s\" command returned (%s) errorcode. Returned output:\n\t%s\n" %
-            #            (action, lastresult[0], lastresult[1]) )
 
+            # Prepare list of fallback actions to execute
+            fallback_actions = []
             for num, action in enumerate( lastresult[2][::-1] ):
-                result = self.execFunc( action=action, listoferrors=[], genCMD=self.genCMD, num=num+1 )
-                if result and result[0] < -1:
-                    logger.error("\nERROR: %s\n" % result[1] )
+                if not action: continue
+                fallback_actions.append( {'action' : action} )
+
+            # Run the prepared list of actions
+            result = self.execActionList( actionlist=fallback_actions, cancelonerror=False )
 
         return lastresult[0]
 

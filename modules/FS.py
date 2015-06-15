@@ -42,7 +42,23 @@ def getSubstitutedDict( config ):
     if repeat: getSubstitutedDict( config=config )
 
 
+# Do a human readable output of the variable
+def complexPrint( data, indent=0 ):
+    if type(data) == dict:
+        for key, value in data.iteritems():
+            print( "%s %s :" % ("\t"*indent, str(key)) )
+            complexPrint(value, indent=indent+1)
+    elif type(data) in (list, tuple):
+        for el in data:
+            print( "%s- %s" % ("\t"*indent, str(el)) )
+    else:
+        print( "%s %s" % ("\t"*indent, str(data)) )
+
 ################## CLASSES
+
+# Class that reads YAML config file with list of possible actions
+#    as a parameter it requires address to the config file
+#    and action name
 class ConfigStorage():
     def __init__( self, confAddr, actionName, cmdParameters ):
         if not confAddr:
@@ -77,6 +93,11 @@ class ConfigStorage():
     
     
     # Reads only configuration data + configs of selected action
+    #   This function only reads CONFIG parameters
+    #   it gets default config parameters
+    #   then it overwrites them with global parameters from YAML config file
+    #   then it overwrites them with local action parameters from YAML config file
+    #   then it overwrites them with passed console parameters
     def getConfig( self, actionName="test" ):
         if not self.dataDict: return None
         baseConfig    = self.dataDict.get( "config",   {} )
@@ -120,6 +141,7 @@ class ConfigStorage():
     def getExecList( self, actionName="test" ):
         logger.debug("Reading action list for \"%s\" action" % actionName )
         actionData   = self.dataDict.get( actionName, {} )
+        #complexPrint(actionData)
         actions      = actionData.get( "execlist", {} )
         return actions
 
@@ -145,6 +167,10 @@ class ConfigStorage():
     def genCMD(self, cmd):
         if not cmd: return None
         try:
+            #for key,val in self.actionDict.iteritems():
+            #    print "  - %s - :" % key
+            #    print "\t\t%s" % val
+            #print "==== CMD : %s" % cmd
             line = self.actionDict[cmd] % self.config
         except KeyError:
             #print cmd
